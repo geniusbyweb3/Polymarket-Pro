@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
+<!-- Ethers.js for Real Web3 Wallet Integration -->
+<script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js" type="application/javascript"></script>
 <style>
 :root{
   --bg:#06060d; --bg2:#0b0b16; --card:#10101f; --card2:#16162a; --input:#0a0a14;
@@ -61,8 +63,8 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 .ib.pulse{position:relative}
 .ib.pulse::after{content:'';position:absolute;top:7px;right:7px;width:6px;height:6px;border-radius:50%;background:var(--gr);box-shadow:0 0 0 0 var(--grGlow);animation:live 2s infinite}
 @keyframes live{0%,100%{box-shadow:0 0 0 0 rgba(52,211,153,.7)}50%{box-shadow:0 0 0 6px rgba(52,211,153,0)}}
-.btn-add { background:var(--vioBg); color:var(--vio2); border-color:rgba(139,92,246,.4); font-weight:800; width:auto; padding:0 14px; font-size:12.5px; gap:5px; }
-.btn-add:hover { background:var(--vio); color:#fff; }
+.btn-wallet { background:linear-gradient(135deg, #8b5cf6, #6366f1); color:#fff; border:none; padding:0 12px; font-weight:800; width:auto; font-size:12px; gap:5px; box-shadow:0 4px 15px rgba(139,92,246,.3); }
+.btn-wallet.connected { background:var(--card2); border:1px solid var(--gr); color:var(--gr); box-shadow:none; }
 
 /* ========== TICKER ========== */
 .ticker{display:flex;overflow:hidden;background:rgba(10,10,20,.9);border-bottom:1px solid var(--line);height:30px;align-items:center;position:sticky;top:57px;z-index:99}
@@ -122,7 +124,7 @@ main{padding:16px;max-width:1460px;margin:0 auto}
 .cat{font-size:9px;font-weight:800;letter-spacing:.55px;text-transform:uppercase;padding:4px 8px;border-radius:6px;display:inline-flex;align-items:center;gap:4px;backdrop-filter:blur(8px)}
 .hot{font-size:8.5px;font-weight:800;padding:3px 6px;border-radius:5px;background:linear-gradient(135deg,rgba(251,191,36,.28),rgba(251,146,60,.28));color:var(--am);animation:hp 2.4s infinite}
 @keyframes hp{0%,100%{box-shadow:0 0 0 0 rgba(251,191,36,.35)}50%{box-shadow:0 0 0 5px rgba(251,191,36,0)}}
-.cq{font-size:14px;font-weight:600;line-height:1.38;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;min-height:58px;letter-spacing:-.15px}
+.cq{font-size:14px;font-weight:600;line-height:1.38;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;min-height:58px;letter-spacing:-.15px}
 .prow{display:grid;grid-template-columns:54px 1fr 52px;align-items:center;gap:8px}
 .pl{color:var(--faint);font-weight:700;text-transform:uppercase;letter-spacing:.4px;font-size:9px}
 .pb{height:5px;background:var(--input);border-radius:3px;overflow:hidden}
@@ -162,6 +164,32 @@ main{padding:16px;max-width:1460px;margin:0 auto}
 .buy.dn{background:var(--rdBg);color:var(--rd);border-color:rgba(251,113,133,.3)}
 .buy.dn:hover{background:rgba(251,113,133,.24);box-shadow:0 5px 22px var(--rdGlow);transform:translateY(-1px)}
 .buy .pr{font-family:var(--mono);font-size:11px;opacity:.9}
+
+/* ========== AI BOT PANEL ========== */
+.ai-hero{background:linear-gradient(135deg,rgba(34,211,238,.15),rgba(139,92,246,.15));border:1px solid rgba(34,211,238,.3);border-radius:20px;padding:22px;margin-bottom:16px;position:relative;overflow:hidden}
+.ai-hero::before{content:'';position:absolute;top:-50%;right:-10%;width:250px;height:250px;border-radius:50%;background:radial-gradient(circle,rgba(34,211,238,.2),transparent 70%);pointer-events:none}
+.ai-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;position:relative;z-index:2}
+.ai-title{font-size:20px;font-weight:800;letter-spacing:-.5px;display:flex;align-items:center;gap:8px}
+.ai-status-dot{width:10px;height:10px;border-radius:50%;background:var(--faint);transition:.3s}
+.ai-status-dot.on{background:var(--gr);box-shadow:0 0 12px var(--grGlow);animation:live 2s infinite}
+.ai-desc{font-size:12px;color:var(--dim);margin-bottom:16px;position:relative;z-index:2;line-height:1.5}
+.ai-controls{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;position:relative;z-index:2}
+.ai-stat-box{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:12px}
+.ai-stat-label{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--dim);margin-bottom:4px}
+.ai-stat-val{font-family:var(--mono);font-size:15px;font-weight:800;color:var(--txt)}
+.ai-toggle-btn{width:100%;padding:14px;border-radius:12px;font-size:14.5px;font-weight:800;transition:.2s;position:relative;z-index:2;background:var(--card);border:1px solid var(--line2);color:var(--txt)}
+.ai-toggle-btn.on{background:var(--grBg);border-color:var(--gr);color:var(--gr);box-shadow:0 0 25px rgba(52,211,153,.2)}
+.ai-settings{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:16px}
+.ai-set-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.ai-set-row:last-child{margin-bottom:0}
+.ai-set-lbl{font-size:12px;font-weight:600;color:var(--txt)}
+.ai-set-desc{font-size:10.5px;color:var(--faint);margin-top:2px}
+.ai-input{width:70px;padding:8px;border-radius:8px;background:var(--input);border:1px solid var(--line);color:var(--vio2);font-family:var(--mono);font-size:13px;font-weight:700;text-align:center;outline:none}
+.ai-input:focus{border-color:var(--vio)}
+.ai-log-box{background:#000;border:1px solid var(--line);border-radius:14px;padding:14px;height:300px;overflow-y:auto;font-family:var(--mono);font-size:11px;line-height:1.6;color:var(--dim)}
+.log-line{margin-bottom:6px;display:flex;gap:8px;animation:fade .2s}
+.log-time{color:#444;flex-shrink:0}
+.log-msg.buy{color:var(--gr)}.log-msg.sell{color:var(--vio2)}.log-msg.err{color:var(--rd)}.log-msg.info{color:var(--cy)}
 
 /* ========== WALLET ========== */
 .hero{background:linear-gradient(135deg,rgba(139,92,246,.2),rgba(34,211,238,.09) 55%,rgba(52,211,153,.08));
@@ -330,15 +358,14 @@ main{padding:16px;max-width:1460px;margin:0 auto}
   .logo{width:30px;height:30px;font-size:12px}
   .ticker{top:55px;height:26px}.tick{font-size:10px}
   .grid,.cgrid{grid-template-columns:1fr;gap:9px}
-  .cq{font-size:13.5px;min-height:auto;-webkit-line-clamp:2}
+  .cq{font-size:13.5px;min-height:auto;-webkit-line-clamp:4}
   .mbk{padding:0;align-items:flex-end}
   .mdl{border-radius:22px 22px 0 0;max-height:94vh}
   .hb{font-size:33px}
   .pstats{grid-template-columns:repeat(2,1fr)}
   .ctimer{font-size:24px}
   .mq{font-size:15.5px}
-  .btn-add span { display:none; }
-  .btn-add { padding:0; width:36px; justify-content:center; }
+  .btn-wallet { padding:0 10px; font-size:11px; }
 }
 @media(max-width:400px){
   .stats{grid-template-columns:1fr 1fr;gap:7px}
@@ -359,7 +386,8 @@ main{padding:16px;max-width:1460px;margin:0 auto}
     </div>
   </div>
   <div class="tools">
-    <button class="ib btn-add" id="importBtn" title="Import from URL"><span>🔗 Import</span></button>
+    <button class="ib btn-wallet" id="connectBtn" title="Connect Wallet">🔗 <span>Connect</span></button>
+    <button class="ib" id="importBtn" title="Import URL" style="background:none; border:1px solid var(--line); color:var(--dim);">📥</button>
     <button class="ib" id="searchBtn" title="Search (⌘K)">⌕</button>
     <button class="ib pulse" id="refreshBtn" title="Refresh">↻</button>
     <button class="ib" id="walletBtn" title="Portfolio">◈</button>
@@ -370,9 +398,10 @@ main{padding:16px;max-width:1460px;margin:0 auto}
 
 <nav class="tabs" id="tabs">
   <button class="tb on" data-tab="explore">Explore</button>
-  <button class="tb" data-tab="crypto">Crypto 5m/15m</button>
+  <button class="tb" data-tab="crypto">Crypto</button>
+  <button class="tb" data-tab="ai">OS-Quant AI</button>
   <button class="tb" data-tab="portfolio">Portfolio</button>
-  <button class="tb" data-tab="scanner">Edge Scanner</button>
+  <button class="tb" data-tab="scanner">Scanner</button>
 </nav>
 
 <main>
@@ -406,10 +435,53 @@ main{padding:16px;max-width:1460px;margin:0 auto}
     <div class="cgrid" id="cGrid"></div>
   </section>
 
+  <!-- AI BOT -->
+  <section class="pane" id="p-ai">
+    <div class="ai-hero">
+      <div class="ai-head">
+        <div class="ai-title"><span class="ai-status-dot" id="aiDot"></span> OS-Quant AI</div>
+        <div style="font-size:9px;font-family:var(--mono);font-weight:700;padding:3px 8px;border-radius:4px;background:rgba(0,0,0,.3);color:var(--cy)">v1.0.4-beta</div>
+      </div>
+      <div class="ai-desc">Automated quantitative trading engine scanning all Polymarket and imported data for positive expected value (EV) based on edge, momentum, and liquidity depth.</div>
+      
+      <div class="ai-controls">
+        <div class="ai-stat-box"><div class="ai-stat-label">Cash Bal</div><div class="ai-stat-val" id="aiCash">$0.00</div></div>
+        <div class="ai-stat-box"><div class="ai-stat-label">Open Trades</div><div class="ai-stat-val" id="aiTrades">0</div></div>
+        <div class="ai-stat-box"><div class="ai-stat-label">Bot P&L</div><div class="ai-stat-val" id="aiPnl" style="color:var(--gr)">$0.00</div></div>
+      </div>
+
+      <button class="ai-toggle-btn" id="aiToggle">▶ Start Auto-Trading</button>
+    </div>
+
+    <div class="ai-settings">
+      <div style="font-size:13px;font-weight:800;margin-bottom:14px;color:var(--txt)">Engine Parameters</div>
+      
+      <div class="ai-set-row">
+        <div><div class="ai-set-lbl">Min Edge Required</div><div class="ai-set-desc">Only buy if fair value exceeds market by this %</div></div>
+        <input type="number" class="ai-input" id="aiEdge" value="5" min="1" max="50" step="1">
+      </div>
+
+      <div class="ai-set-row">
+        <div><div class="ai-set-lbl">Trade Size (USD)</div><div class="ai-set-desc">Amount to stake on each AI trade</div></div>
+        <input type="number" class="ai-input" id="aiSize" value="5" min="1" max="100" step="1">
+      </div>
+
+      <div class="ai-set-row">
+        <div><div class="ai-set-lbl">Max Concurrent</div><div class="ai-set-desc">Max open positions the bot can hold</div></div>
+        <input type="number" class="ai-input" id="aiMax" value="3" min="1" max="10" step="1">
+      </div>
+    </div>
+
+    <div style="font-size:13px;font-weight:800;margin-bottom:10px;color:var(--txt)">AI Execution Log</div>
+    <div class="ai-log-box" id="aiLog">
+      <div class="log-line"><span class="log-time">[SYS]</span><span class="log-msg info">OS-Quant AI initialized. Awaiting activation…</span></div>
+    </div>
+  </section>
+
   <!-- PORTFOLIO -->
   <section class="pane" id="p-portfolio">
     <div class="hero">
-      <div class="hl">Total Equity</div>
+      <div class="hl" id="wBalLabel">Total Equity</div>
       <div class="hb" id="wBal">$25<span class="c">.00</span></div>
       <div class="hp" id="wPnl">+$0.00 (0.00%)</div>
       <div class="hsub">
@@ -472,6 +544,7 @@ main{padding:16px;max-width:1460px;margin:0 auto}
 <nav class="mnav" id="mnav">
   <button class="on" data-tab="explore"><span class="ni">◉</span><span>Explore</span></button>
   <button data-tab="crypto"><span class="ni">₿</span><span>Crypto</span></button>
+  <button data-tab="ai"><span class="ni">🤖</span><span>AI Bot</span></button>
   <button data-tab="portfolio"><span class="ni">◈</span><span>Portfolio</span></button>
   <button data-tab="scanner"><span class="ni">⚡</span><span>Scanner</span></button>
 </nav>
@@ -480,8 +553,8 @@ main{padding:16px;max-width:1460px;margin:0 auto}
 <div class="mbk hide" id="tradeModal"><div class="mdl"><button class="mx" id="tradeClose">×</button><div id="tradeBody"></div></div></div>
 <!-- FUND MODAL -->
 <div class="mbk hide" id="fundModal"><div class="mdl" style="max-width:370px"><button class="mx" id="fundClose">×</button><div style="padding:22px">
-  <div style="font-size:17px;font-weight:800;margin-bottom:4px">Add Funds</div>
-  <div style="font-size:11.5px;color:var(--dim);margin-bottom:16px">Dummy wallet top-up. No real money involved.</div>
+  <div style="font-size:17px;font-weight:800;margin-bottom:4px">Add Funds (Demo)</div>
+  <div style="font-size:11.5px;color:var(--dim);margin-bottom:16px">Top up your dummy wallet balance.</div>
   <div class="fg"><div class="fl"><span>Amount (USD)</span></div><input class="fi" id="fundAmt" type="number" value="25" min="1" step="1"></div>
   <div class="qam" style="margin-bottom:14px">
     <button class="qa" data-a="25">+$25</button><button class="qa" data-a="50">+$50</button>
@@ -523,19 +596,19 @@ main{padding:16px;max-width:1460px;margin:0 auto}
 
 <script>
 /* ============================================================
-   POLYSIGNAL X — engine
+   POLYSIGNAL X — engine with Web3 Wallet Integration
    ============================================================ */
 const GAMMA='https://gamma-api.polymarket.com';
 const CG='https://api.coingecko.com/api/v3/simple/price';
 
 const ASSETS=[
-  {s:'BTC',id:'bitcoin',n:'Bitcoin',c:'#f7931a'},
-  {s:'ETH',id:'ethereum',n:'Ethereum',c:'#627eea'},
-  {s:'SOL',id:'solana',n:'Solana',c:'#14f195'},
-  {s:'XRP',id:'ripple',n:'XRP',c:'#5b8def'},
-  {s:'DOGE',id:'dogecoin',n:'Dogecoin',c:'#c2a633'},
-  {s:'BNB',id:'binancecoin',n:'BNB',c:'#f3ba2f'},
-  {s:'HYPE',id:'hyperliquid',n:'Hyperliquid',c:'#50d2c1'}
+  {s:'BTC',id:'bitcoin',n:'Bitcoin',c:'#f7931a',b:'BTCUSDT'},
+  {s:'ETH',id:'ethereum',n:'Ethereum',c:'#627eea',b:'ETHUSDT'},
+  {s:'SOL',id:'solana',n:'Solana',c:'#14f195',b:'SOLUSDT'},
+  {s:'XRP',id:'ripple',n:'XRP',c:'#5b8def',b:'XRPUSDT'},
+  {s:'DOGE',id:'dogecoin',n:'Dogecoin',c:'#c2a633',b:'DOGEUSDT'},
+  {s:'BNB',id:'binancecoin',n:'BNB',c:'#f3ba2f',b:'BNBUSDT'},
+  {s:'HYPE',id:'hyperliquid',n:'Hyperliquid',c:'#50d2c1',b:''}
 ];
 const INTERVALS=[5,15];
 
@@ -559,7 +632,14 @@ const S={
   cat:'all', q:'', sort:'vol24', scSort:'score',
   wallet:{bal:25,init:25}, positions:[], history:[],
   trade:null, cmdFilter:'all', cmdResults:[], cmdIdx:0,
-  cryptoLive:false, histFilter:'all'
+  cryptoLive:false, histFilter:'all',
+  ai: { on: false, edge: 5, size: 5, max: 3, logs: [] },
+  
+  // Real Wallet State
+  isRealWallet: false,
+  realAddress: null,
+  realBalance: 0,
+  realPositions: []
 };
 
 /* ---------- helpers ---------- */
@@ -576,10 +656,26 @@ const hash=s=>{let h=0;for(let i=0;i<s.length;i++)h=((h<<5)-h+s.charCodeAt(i))|0
 function toast(m,t='s'){const e=$('toast');e.textContent=m;e.className='tst '+(t==='e'?'e':t==='i'?'i':'');clearTimeout(toast._t);toast._t=setTimeout(()=>e.classList.add('hide'),2800)}
 function save(k,v){try{localStorage.setItem('px:'+k,JSON.stringify(v))}catch{}}
 function load(k,d){try{const v=localStorage.getItem('px:'+k);return v?JSON.parse(v):d}catch{return d}}
+
 async function jget(url,ms=8500){
-  const c=new AbortController(),t=setTimeout(()=>c.abort(),ms);
-  try{const r=await fetch(url,{signal:c.signal,headers:{Accept:'application/json'}});if(!r.ok)throw new Error(r.status);return await r.json()}
-  finally{clearTimeout(t)}
+  const c = new AbortController();
+  const t = setTimeout(() => c.abort(), ms);
+  try {
+    const r = await fetch(url, { signal: c.signal, headers: { Accept: 'application/json' } });
+    if (!r.ok) throw new Error(r.status);
+    return await r.json();
+  } catch (e) {
+    try {
+      const proxy = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+      const r2 = await fetch(proxy, { signal: c.signal });
+      if (!r2.ok) throw new Error(r2.status);
+      return await r2.json();
+    } catch (e2) {
+      throw new Error('Network or CORS error');
+    }
+  } finally {
+    clearTimeout(t);
+  }
 }
 
 /* ---------- category ---------- */
@@ -596,6 +692,105 @@ function catOfMarket(m){
     for(const t of arr){const l=t&&(t.label||t.slug||t.name);if(l&&!GENERIC.has(String(l).toLowerCase()))tags.push(String(l))}
   }
   return detectCat(m.question||m.title||'',tags);
+}
+
+/* ============================================================
+   REAL WALLET INTEGRATION (Web3 / MetaMask)
+   ============================================================ */
+async function connectWallet() {
+  if (!window.ethereum) {
+    toast('Please install MetaMask!', 'e');
+    return;
+  }
+  
+  try {
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    S.realAddress = accounts[0];
+    S.isRealWallet = true;
+    
+    try {
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: '0x89' }],
+      });
+    } catch (switchError) {
+      if (switchError.code === 4902) {
+        await window.ethereum.request({
+          method: 'wallet_addEthereumChain',
+          params: [{
+            chainId: '0x89',
+            chainName: 'Polygon Mainnet',
+            rpcUrls: ['https://polygon-rpc.com/'],
+            nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
+            blockExplorerUrls: ['https://polygonscan.com/']
+          }]
+        });
+      }
+    }
+    
+    $('connectBtn').innerHTML = `🦊 ${S.realAddress.slice(0,6)}...${S.realAddress.slice(-4)}`;
+    $('connectBtn').classList.add('connected');
+    $('wBalLabel').textContent = 'Live USDC.e Balance';
+    $('fundBtn').style.display = 'none';
+    
+    toast('Wallet Connected!');
+    
+    await fetchRealBalance();
+    await fetchRealPositions();
+    renderPortfolio();
+    
+    window.ethereum.on('accountsChanged', (accs) => {
+      if(accs.length === 0) disconnectWallet();
+      else {
+        S.realAddress = accs[0];
+        $('connectBtn').innerHTML = `🦊 ${S.realAddress.slice(0,6)}...${S.realAddress.slice(-4)}`;
+        fetchRealBalance().then(renderPortfolio);
+        fetchRealPositions().then(renderPortfolio);
+      }
+    });
+    
+  } catch (err) {
+    console.error(err);
+    toast('Connection failed', 'e');
+  }
+}
+
+function disconnectWallet() {
+  S.isRealWallet = false;
+  S.realAddress = null;
+  S.realBalance = 0;
+  S.realPositions = [];
+  $('connectBtn').innerHTML = `🔗 <span>Connect</span>`;
+  $('connectBtn').classList.remove('connected');
+  $('wBalLabel').textContent = 'Total Equity';
+  $('fundBtn').style.display = 'inline-flex';
+  renderPortfolio();
+  toast('Wallet Disconnected', 'i');
+}
+
+async function fetchRealBalance() {
+  if (!S.realAddress || typeof ethers === 'undefined') return;
+  try {
+    const provider = new ethers.providers.Web3Provider(window.ethereum);
+    const USDC_E_ADDRESS = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174"; // Polymarket uses USDC.e
+    const abi = ["function balanceOf(address) view returns (uint256)"];
+    const contract = new ethers.Contract(USDC_E_ADDRESS, abi, provider);
+    
+    const balWei = await contract.balanceOf(S.realAddress);
+    S.realBalance = parseFloat(ethers.utils.formatUnits(balWei, 6));
+  } catch(e) {
+    console.error("Failed to fetch on-chain balance", e);
+  }
+}
+
+async function fetchRealPositions() {
+  if (!S.realAddress) return;
+  try {
+    const res = await jget(`https://data-api.polymarket.com/positions?user=${S.realAddress}`);
+    S.realPositions = res || [];
+  } catch(e) {
+    console.warn("Failed to fetch real positions", e);
+  }
 }
 
 /* ============================================================
@@ -636,9 +831,12 @@ function normMarket(m){
     const slug=m.slug||evSlug||'';
     const url=evSlug?`https://polymarket.com/event/${evSlug}`:(slug?`https://polymarket.com/market/${slug}`:'https://polymarket.com');
     const img=m.image||m.icon||ev.image||ev.icon||m.twitterCardImage||'';
+    
+    const title = m.title || m.question || ev.title || 'Untitled market';
+    
     return{
       id:String(m.id||slug||uid()),kind:'market',
-      q:m.question||m.title||'Untitled market',
+      q:title,
       desc:m.description||ev.description||'',
       slug,evSlug,url,img,
       cat:ci.n,catI:ci.i,catC:ci.c,catB:ci.b,
@@ -661,10 +859,9 @@ async function loadMarkets(){
   const tagIds = ['100265', '21', '1', '100328', '100326'];
   const urls = tagIds.map(id => `${GAMMA}/markets?tag_id=${id}&active=true&closed=false&limit=100&_t=${Date.now()}`);
   urls.push(`${GAMMA}/markets?active=true&closed=false&limit=100&order=volume24hr&ascending=false&_t=${Date.now()}`);
-  urls.push(`${GAMMA}/markets?active=true&closed=false&limit=100&order=liquidity&ascending=false&_t=${Date.now()}`);
   
   const seen=new Set(),out=[];
-  const rs=await Promise.allSettled(urls.map(u=>jget(u)));
+  const rs=await Promise.allSettled(urls.map(u=>jget(u, 6000)));
   for(const r of rs){
     if(r.status!=='fulfilled'||!Array.isArray(r.value))continue;
     for(const raw of r.value){const n=normMarket(raw);if(n&&!seen.has(n.id)){seen.add(n.id);out.push(n)}}
@@ -674,25 +871,45 @@ async function loadMarkets(){
 
 /* ---------- crypto ---------- */
 async function fetchPrices(){
-  const ids=ASSETS.map(a=>a.id).join(',');
-  try{
-    const d=await jget(`${CG}?ids=${ids}&vs_currencies=usd&include_24hr_change=true`,7000);
-    const now=Date.now();
-    for(const a of ASSETS){
-      const row=d[a.id];
-      if(!row||!row.usd)continue;
-      S.prices[a.s]={p:row.usd,chg:row.usd_24h_change||0};
-      const h=S.priceHist[a.s]||(S.priceHist[a.s]=[]);
-      h.push({t:now,p:row.usd});
-      if(h.length>60)h.shift();
-    }
-  }catch(e){}
+  const now = Date.now();
   for(const a of ASSETS){
-    if(!S.prices[a.s])S.prices[a.s]={p:0,chg:0};
-    const h=S.priceHist[a.s]||(S.priceHist[a.s]=[]);
-    if(!h.length&&S.prices[a.s].p>0)for(let i=0;i<24;i++)h.push({t:Date.now()-i*60000,p:S.prices[a.s].p*(1+(Math.random()-.5)*.004)});
+    let success = false;
+    if(a.b){
+      try{
+        const d = await jget(`https://api.binance.com/api/v3/ticker/price?symbol=${a.b}`, 4000);
+        if(d && d.price){
+          const p = parseFloat(d.price);
+          S.prices[a.s] = { p: p, chg: S.prices[a.s]?.chg || 0 };
+          const h = S.priceHist[a.s] || (S.priceHist[a.s] = []);
+          h.push({ t: now, p: p });
+          if(h.length > 60) h.shift();
+          success = true;
+        }
+      } catch(e){}
+    }
+    if(!success){
+      try{
+        const d = await jget(`${CG}?ids=${a.id}&vs_currencies=usd&include_24hr_change=true`, 4000);
+        if(d && d[a.id] && d[a.id].usd){
+          S.prices[a.s] = { p: d[a.id].usd, chg: d[a.id].usd_24h_change || 0 };
+          const h = S.priceHist[a.s] || (S.priceHist[a.s] = []);
+          h.push({ t: now, p: d[a.id].usd });
+          if(h.length > 60) h.shift();
+          success = true;
+        }
+      } catch(e){}
+    }
+    if(!success){
+      const last = S.prices[a.s]?.p || (a.s==='BTC'?65000:a.s==='ETH'?3000:150);
+      const drift = (Math.random() - 0.5) * 0.01;
+      S.prices[a.s] = { p: last * (1 + drift), chg: (Math.random() - 0.5) * 5 };
+      const h = S.priceHist[a.s] || (S.priceHist[a.s] = []);
+      h.push({ t: now, p: S.prices[a.s].p });
+      if(h.length > 60) h.shift();
+    }
   }
 }
+
 function windowStart(min){return Math.floor(Date.now()/(min*60000))*(min*60000)}
 function windowEnd(min){return windowStart(min)+min*60000}
 function slugFor(sym,min){return `${sym.toLowerCase()}-updown-${min}m-${Math.floor(windowStart(min)/1000)}`}
@@ -870,6 +1087,129 @@ function renderCrypto(){
 }
 
 /* ============================================================
+   AI AUTO-TRADER
+   ============================================================ */
+function aiLog(msg, type='info') {
+  const time = new Date().toLocaleTimeString('en-US', {hour12:false, hour:'2-digit', minute:'2-digit', second:'2-digit'});
+  S.ai.logs.unshift({ time, msg, type });
+  if (S.ai.logs.length > 50) S.ai.logs.pop();
+  renderAILog();
+}
+
+function renderAILog() {
+  const el = $('aiLog');
+  if (!el) return;
+  el.innerHTML = S.ai.logs.map(l => 
+    `<div class="log-line"><span class="log-time">[${l.time}]</span><span class="log-msg ${l.type}">${esc(l.msg)}</span></div>`
+  ).join('');
+}
+
+function updateAIUI() {
+  const on = S.ai.on;
+  $('aiDot').className = 'ai-status-dot ' + (on ? 'on' : '');
+  $('aiToggle').textContent = on ? '⏸ Stop Auto-Trading' : '▶ Start Auto-Trading';
+  $('aiToggle').className = 'ai-toggle-btn ' + (on ? 'on' : '');
+  
+  $('aiCash').textContent = usd(S.wallet.bal);
+  $('aiTrades').textContent = S.positions.length;
+  const botPnl = S.history.filter(h => h.mode.includes('AI')).reduce((s,h)=>s+h.pnl, 0);
+  const pnlEl = $('aiPnl');
+  pnlEl.textContent = (botPnl>=0?'+':'') + usd(botPnl);
+  pnlEl.style.color = botPnl >= 0 ? 'var(--gr)' : 'var(--rd)';
+}
+
+function runAIBot() {
+  if (!S.ai.on) return;
+  
+  S.ai.edge = parseFloat($('aiEdge').value) || 5;
+  S.ai.size = parseFloat($('aiSize').value) || 5;
+  S.ai.max  = parseInt($('aiMax').value) || 3;
+
+  if (S.positions.length >= S.ai.max) return;
+  if (S.wallet.bal < S.ai.size) {
+    aiLog('Insufficient cash balance to execute trade.', 'err');
+    $('aiToggle').click(); 
+    return;
+  }
+
+  const minEdgeDec = S.ai.edge / 100;
+  const candidates = [];
+  const openIds = new Set(S.positions.map(p => p.marketId));
+
+  for (const m of S.markets) {
+    if (openIds.has(m.id)) continue;
+    if (Math.abs(m.edge) >= minEdgeDec) {
+      candidates.push({ type: 'market', item: m, score: Math.abs(m.edge) * m.conf });
+    }
+  }
+
+  for (const c of S.crypto) {
+    if (openIds.has(c.id)) continue;
+    const left = c.end - Date.now();
+    if (left > 60000 && left < c.min * 60000 * 0.8) {
+      const driftPct = c.drift * 100;
+      if (Math.abs(driftPct) > 0.15) {
+        candidates.push({ type: 'crypto', item: c, score: Math.abs(driftPct) });
+      }
+    }
+  }
+
+  if (!candidates.length) return;
+  candidates.sort((a, b) => b.score - a.score);
+  const best = candidates[0];
+
+  if (best.type === 'market') {
+    const m = best.item;
+    const side = m.edge > 0 ? 'YES' : 'NO';
+    const price = side === 'YES' ? m.pMkt : 1 - m.pMkt;
+    const shares = S.ai.size / price;
+    
+    S.wallet.bal -= S.ai.size;
+    S.positions.push({
+      id: uid(), kind: 'market', marketId: m.id, question: m.q,
+      side, entry: price, shares, cost: S.ai.size,
+      sl: 20, tp: 50,
+      openedAt: Date.now(), endTs: m.end ? new Date(m.end).getTime() : 0
+    });
+    
+    aiLog(`BUY ${side} ${shares.toFixed(2)}x "${m.q.slice(0,20)}..." @ ${(price*100).toFixed(1)}¢`, 'buy');
+    persist();
+    renderPortfolio();
+    
+  } else if (best.type === 'crypto') {
+    const c = best.item;
+    const side = c.drift > 0 ? 'UP' : 'DOWN';
+    const price = side === 'UP' ? c.up : c.down;
+    const shares = S.ai.size / price;
+    
+    S.wallet.bal -= S.ai.size;
+    S.positions.push({
+      id: uid(), kind: 'crypto', marketId: c.id, question: `${c.sym} ${c.min}m ${side}`,
+      side, entry: price, shares, cost: S.ai.size,
+      sl: 0, tp: 0,
+      openedAt: Date.now(), endTs: c.end,
+      strike: c.strike, asset: c.sym
+    });
+    
+    aiLog(`BUY ${side} ${shares.toFixed(2)}x ${c.sym} ${c.min}m @ ${(price*100).toFixed(1)}¢`, 'buy');
+    persist();
+    renderPortfolio();
+  }
+}
+
+function toggleAI() {
+  S.ai.on = !S.ai.on;
+  if (S.ai.on) {
+    aiLog('Engine started. Scanning for positive EV setups…', 'info');
+    toast('OS-Quant AI Started');
+  } else {
+    aiLog('Engine paused by user.', 'info');
+    toast('AI Paused', 'i');
+  }
+  updateAIUI();
+}
+
+/* ============================================================
    WALLET + POSITIONS
    ============================================================ */
 function markPrice(p){
@@ -887,19 +1227,64 @@ function posValue(p){return p.shares*markPrice(p)}
 function posPnl(p){const v=posValue(p);return{v,pnl:v-p.cost,pct:p.cost?(v-p.cost)/p.cost:0}}
 
 function renderPortfolio(){
+  if (S.isRealWallet) {
+    // === REAL WALLET UI ===
+    $('wBal').innerHTML = usd(S.realBalance).replace('.','<span class="c">.')+'</span>';
+    $('wPnl').textContent = 'Live On-Chain Data';
+    $('wPnl').style.color = 'var(--cy)';
+    
+    $('wCash').textContent = usd(S.realBalance);
+    $('wOpen').textContent = S.realPositions.length + ' positions';
+
+    $('sPort').textContent = usd(S.realBalance);
+    $('sPnl').textContent = '—';
+    $('sOpen').textContent = S.realPositions.length;
+    $('sWin').textContent = '—';
+    $('posN').textContent = S.realPositions.length;
+
+    const pl=$('posList'),pe2=$('posEmpty');
+    if(!S.realPositions.length){pl.innerHTML='';pe2.classList.remove('hide')}
+    else{
+      pe2.classList.add('hide');
+      pl.innerHTML = S.realPositions.map(p => {
+        const isYes = p.outcome === 'Yes';
+        const sideCls = isYes ? 'y' : 'n';
+        const curVal = p.currentValue || 0;
+        const pnl = p.cashPnl || 0;
+        const pct = p.percentPnl || 0;
+        
+        return `<div class="pc" style="border-color:var(--grGlow)">
+          <div class="ph"><div class="pq">${esc(p.title)}</div><span class="side ${sideCls}">${esc(p.outcome)}</span></div>
+          <div class="pstats">
+            <div><div class="psl">Size</div><div class="psv">${Number(p.size).toFixed(2)}</div></div>
+            <div><div class="psl">Avg Price</div><div class="psv">${(p.avgPrice*100).toFixed(1)}¢</div></div>
+            <div><div class="psl">Value</div><div class="psv">${usd(curVal)}</div></div>
+            <div><div class="psl">P&amp;L</div><div class="psv" style="color:${pnl>=0?'var(--gr)':'var(--rd)'}">${pnl>=0?'+':''}${usd(pnl)} (${pct.toFixed(1)}%)</div></div>
+          </div>
+          <div class="pctl" style="justify-content:flex-end; border:none; padding-top:10px;">
+            <a href="https://polymarket.com/profile/${S.realAddress}" target="_blank" class="xbtn sell" style="text-decoration:none">Manage on Polymarket ↗</a>
+          </div>
+        </div>`;
+      }).join('');
+    }
+    
+    $('histList').innerHTML = `<div class="emp"><div class="ic">📊</div><div class="tt">Real wallet history</div><div class="dd">View complete transaction history on Polymarket.</div></div>`;
+    $('histEmpty').classList.add('hide');
+    
+    return;
+  }
+
+  // === DUMMY WALLET UI ===
   const openV=S.positions.reduce((s,p)=>s+posValue(p),0);
   const equity=S.wallet.bal+openV;
   const pnl=equity-S.wallet.init;
   const pnlPct=S.wallet.init?pnl/S.wallet.init:0;
 
-  // Total Equity (fluctuating in real time)
   $('wBal').innerHTML=usd(equity).replace('.','<span class="c">.')+'</span>';
-  $('wBal').style.color = pnl>=0 ? 'var(--txt)' : 'var(--txt)';
   const pe=$('wPnl');
   pe.textContent=`${pnl>=0?'+':''}${usd(pnl)} (${(pnlPct*100).toFixed(2)}%)`;
   pe.style.color=pnl>=0?'var(--gr)':'var(--rd)';
 
-  // Sub-labels: cash & in-positions
   $('wCash').textContent=usd(S.wallet.bal);
   $('wOpen').textContent=usd(openV);
 
@@ -984,6 +1369,8 @@ function renderPortfolio(){
       </div>
     </div>`).join('');
   }
+
+  updateAIUI();
 }
 
 function persist(){save('wallet',S.wallet);save('pos',S.positions);save('hist',S.history)}
@@ -1004,11 +1391,11 @@ function closeAllPositions(){
   toast(`Closed all positions. Recovered ${usd(totalPayout)}`,'i');
 }
 
-function sellPos(id){
+function sellPos(id, isAI=false){
   const i=S.positions.findIndex(x=>x.id===id);if(i<0)return;
   const p=S.positions[i],px=markPrice(p),payout=p.shares*px,pnl=payout-p.cost;
   S.wallet.bal+=payout;
-  S.history.unshift({...p,payout,pnl,win:pnl>0,mode:'Sold early'});
+  S.history.unshift({...p,payout,pnl,win:pnl>0,mode:isAI?'AI Close':'Sold early'});
   S.positions.splice(i,1);
   persist();renderPortfolio();
   toast(`Sold ${p.shares.toFixed(1)} @ ${(px*100).toFixed(1)}¢ → ${pnl>=0?'+':''}${usd(pnl)}`);
@@ -1031,7 +1418,6 @@ function resolvePos(id){
 function settleDue(){
   let changed=false;
   for(const p of S.positions.slice()){
-    // 1. Crypto window expiry — auto-resolve at strike vs spot
     if(p.kind==='crypto'){
       const c=S.crypto.find(x=>x.id===p.marketId);
       if(c && Date.now()>=c.end){
@@ -1043,10 +1429,10 @@ function settleDue(){
         S.positions = S.positions.filter(x=>x.id!==p.id);
         changed=true;
         toast(win?`✅ ${p.side} won → +${usd(pnl)}`:`❌ ${p.side} lost → −${usd(p.cost)}`, win?'s':'e');
+        if (S.ai.on) aiLog(`EXPIRED ${p.side} ${win ? 'WIN' : 'LOSS'} → ${usd(pnl)}`, win?'info':'err');
         continue;
       }
     }
-    // 2. Auto stop-loss / take-profit triggers
     if(p.sl>0 || p.tp>0){
       const r = posPnl(p);
       const pctChange = r.pct*100;
@@ -1057,6 +1443,7 @@ function settleDue(){
         S.positions = S.positions.filter(x=>x.id!==p.id);
         changed=true;
         toast(`🛑 Stop-Loss triggered — lost ${usd(-pnl)}`,'e');
+        if (S.ai.on) aiLog(`STOP-LOSS triggered on ${p.question.slice(0,15)}... Lost ${usd(-pnl)}`, 'err');
         continue;
       }
       if(p.tp>0 && pctChange >= p.tp){
@@ -1066,6 +1453,7 @@ function settleDue(){
         S.positions = S.positions.filter(x=>x.id!==p.id);
         changed=true;
         toast(`🎯 Take-Profit triggered — profit ${usd(pnl)}`,'s');
+        if (S.ai.on) aiLog(`TAKE-PROFIT triggered on ${p.question.slice(0,15)}... Profit ${usd(pnl)}`, 'info');
         continue;
       }
     }
@@ -1092,7 +1480,7 @@ function renderTrade(){
   const {kind,item:m,side}=S.trade;
   const isCrypto=kind==='crypto';
   const price=isCrypto?(side==='UP'?m.up:m.down):(side==='YES'?m.pMkt:1-m.pMkt);
-  const bal=S.wallet.bal;
+  const bal=S.isRealWallet ? S.realBalance : S.wallet.bal;
   const def=Math.min(100,Math.max(10,Math.floor(bal)));
   const yesLbl=isCrypto?'UP':`YES · ${(m.pMkt*100).toFixed(1)}¢`;
   const noLbl=isCrypto?'DOWN':`NO · ${((1-m.pMkt)*100).toFixed(1)}¢`;
@@ -1107,6 +1495,7 @@ function renderTrade(){
       <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
         <span class="cat" style="background:${m.catB};color:${m.catC}">${m.catI} ${esc(m.cat)}</span>
         ${isCrypto?`<span class="cint">${m.min}M WINDOW</span>`:''}
+        ${S.isRealWallet?`<span class="cint" style="background:var(--grBg);color:var(--gr)">LIVE WALLET</span>`:''}
       </div>
       <div class="mq">${esc(m.q)}</div>
       ${desc?`<div class="mdesc"><b>Summary:</b> ${esc(desc)}${desc.length>=420?'…':''}</div>`:''}
@@ -1132,7 +1521,7 @@ function renderTrade(){
       </div>
 
       <div class="fg">
-        <div class="fl"><span>Stake (USD)</span><span style="font-family:var(--mono);color:var(--faint)">Cash: ${usd(bal)}</span></div>
+        <div class="fl"><span>Stake (USD)</span><span style="font-family:var(--mono);color:var(--faint)">${S.isRealWallet?'USDC.e:':'Cash:'} ${usd(bal)}</span></div>
         <input class="fi" id="stake" type="number" min="1" value="${def}" oninput="updPayout()">
         <div class="qam">
           ${[5,10,25,50,100].map(a=>`<button class="qa" data-st="${a}">$${a}</button>`).join('')}
@@ -1155,10 +1544,10 @@ function renderTrade(){
 
       <div class="payout" id="payoutBox"></div>
 
-      <button class="sub ${(side==='YES'||side==='UP')?'y':'n'}" id="goBtn">Buy ${side} @ ${(price*100).toFixed(1)}¢</button>
+      <button class="sub ${(side==='YES'||side==='UP')?'y':'n'}" id="goBtn">${S.isRealWallet?'Simulate Trade':'Buy'} ${side} @ ${(price*100).toFixed(1)}¢</button>
 
       <div style="font-size:9.5px;color:var(--faint);text-align:center;margin-top:10px;line-height:1.5">
-        Binary payoff: win → <b style="color:var(--gr)">full $1.00 per share</b>. Lose → <b style="color:var(--rd)">entire stake lost</b>.
+        ${S.isRealWallet ? '<b style="color:var(--am)">Note: Real wallet connected. Actual execution requires a backend proxy.</b>' : 'Binary payoff: win → <b style="color:var(--gr)">full $1.00 per share</b>. Lose → <b style="color:var(--rd)">entire stake lost</b>.'}
       </div>
       <div style="text-align:center;margin-top:8px">
         <a href="${esc(polyUrl)}" target="_blank" rel="noopener" style="font-size:11px;font-weight:700;color:var(--vio2);text-decoration:none;display:inline-flex;align-items:center;gap:4px">
@@ -1195,8 +1584,9 @@ function updPayout(){
       <div class="pvb w"><div class="lbl">If correct — profit</div><div class="amt" style="color:var(--gr)">+${usd(profit)}</div></div>
     </div>
   `;
+  const bal = S.isRealWallet ? S.realBalance : S.wallet.bal;
   const btn=$('goBtn');
-  if(btn)btn.disabled=stake<=0||stake>S.wallet.bal;
+  if(btn)btn.disabled=stake<=0||stake>bal;
 }
 
 function doBuy(){
@@ -1205,12 +1595,20 @@ function doBuy(){
   const isCrypto=kind==='crypto';
   const price=isCrypto?(side==='UP'?m.up:m.down):(side==='YES'?m.pMkt:1-m.pMkt);
   const stake=Math.max(0,+($('stake')?.value||0));
+  const bal = S.isRealWallet ? S.realBalance : S.wallet.bal;
+  
   if(stake<=0){toast('Enter a stake','e');return}
-  if(stake>S.wallet.bal){toast('Insufficient cash balance','e');return}
+  if(stake>bal){toast('Insufficient balance','e');return}
   const shares=stake/price;
   const sl=clamp(+($('slr')?.value||0),0,100);
   const tp=clamp(+($('tpr')?.value||0),0,500);
-  S.wallet.bal-=stake;
+  
+  if (S.isRealWallet) {
+    toast('Demo mode: Real trade signing requires backend setup.', 'i');
+  } else {
+    S.wallet.bal-=stake;
+  }
+  
   S.positions.push({
     id:uid(),kind,marketId:m.id,question:isCrypto?`${m.sym} ${m.min}m ${side}`:m.q,
     side,entry:price,shares,cost:stake,sl,tp,
@@ -1237,9 +1635,8 @@ async function doImport(){
   const url = $('importUrl').value.trim();
   if(!url) { toast('Paste a Polymarket link', 'e'); return; }
   
-  // Extract slug from URL (e.g., https://polymarket.com/event/some-slug or /market/some-slug)
   let slug = url.split('/').filter(Boolean).pop();
-  slug = slug.split('?')[0]; // strip query params
+  slug = slug.split('?')[0];
   
   if(!slug || slug === 'polymarket.com') {
     toast('Invalid Polymarket URL', 'e'); return;
@@ -1251,50 +1648,35 @@ async function doImport(){
   
   try {
     let marketRaw = null;
-    
-    // 1. Try events endpoint
-    let res = await jget(`https://gamma-api.polymarket.com/events?slug=${slug}`);
+    let res = await jget(`https://gamma-api.polymarket.com/events?slug=${slug}`, 6000);
     if(Array.isArray(res) && res.length > 0) {
       const ev = res[0];
       if(ev.markets && ev.markets.length > 0) {
         marketRaw = ev.markets[0];
-        // Attach event info for normMarket
         marketRaw.events = [ev];
       }
     }
-    
-    // 2. Try markets endpoint if events failed
     if(!marketRaw) {
-      res = await jget(`https://gamma-api.polymarket.com/markets?slug=${slug}`);
-      if(Array.isArray(res) && res.length > 0) {
-        marketRaw = res[0];
-      }
+      res = await jget(`https://gamma-api.polymarket.com/markets?slug=${slug}`, 6000);
+      if(Array.isArray(res) && res.length > 0) marketRaw = res[0];
     }
-    
-    if(!marketRaw) {
-      throw new Error('Market not found. Check the link.');
-    }
+    if(!marketRaw) throw new Error('Market not found. Check the link.');
     
     const normalized = normMarket(marketRaw);
-    if(!normalized) {
-      throw new Error('Invalid market data received');
-    }
+    if(!normalized) throw new Error('Invalid market data received');
     
-    // Check if already exists
     if(S.markets.find(m => m.id === normalized.id)) {
-      toast('This market is already in your library!', 'i');
+      toast('Market already imported!', 'i');
       closeImport();
       return;
     }
     
-    // Save to imported list in localStorage
     const imported = load('imported', []);
     if(!imported.find(m => m.id === normalized.id)) {
       imported.push(normalized);
       save('imported', imported);
     }
     
-    // Add to live state
     S.markets.push(analyze(normalized));
     renderAll();
     closeImport();
@@ -1410,6 +1792,7 @@ function switchTab(tab){
   document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.id==='p-'+tab));
   if(tab==='portfolio')renderPortfolio();
   if(tab==='crypto')renderCrypto();
+  if(tab==='ai'){updateAIUI();renderAILog();}
   if(tab==='scanner')renderScanner();
   window.scrollTo({top:0,behavior:'smooth'});
 }
@@ -1418,9 +1801,13 @@ function switchTab(tab){
    MAIN RENDER
    ============================================================ */
 function renderAll(){
-  S.markets=S.markets.map(analyze);
-  renderCats();renderMarkets();renderTicker();renderScanner();
-  renderCrypto();renderPortfolio();
+  try {
+    S.markets=S.markets.map(analyze);
+    renderCats();renderMarkets();renderTicker();renderScanner();
+    renderCrypto();renderPortfolio();updateAIUI();
+  } catch(e) {
+    console.warn("UI Render Error", e);
+  }
 }
 
 /* ============================================================
@@ -1433,25 +1820,29 @@ async function boot(){
 
   $('mGrid').innerHTML=Array.from({length:6},()=>'<div class="sk"></div>').join('');
 
-  const [mk] = await Promise.allSettled([loadMarkets()]);
-  if(mk.status==='fulfilled'&&mk.value.length>=8){
-    S.markets=mk.value;
-  }else{
-    S.markets=demoMarkets();
-  }
-
-  // Load imported markets from localStorage
-  const imported = load('imported', []);
-  for(const im of imported) {
-    if(!S.markets.find(m => m.id === im.id)) {
-      S.markets.push(im);
+  try {
+    const [mk] = await Promise.allSettled([loadMarkets()]);
+    if(mk.status==='fulfilled' && mk.value && mk.value.length>=8){
+      S.markets = mk.value;
+    } else {
+      S.markets = demoMarkets();
     }
+
+    const imported = load('imported', []);
+    for(const im of imported) {
+      if(!S.markets.find(m => m.id === im.id)) {
+        S.markets.push(im);
+      }
+    }
+
+    await Promise.allSettled([loadCrypto()]);
+
+    if(!S.markets.length)S.markets=demoMarkets();
+    if(!S.crypto.length)S.crypto=[];
+  } catch(e) {
+    console.warn("Boot network error, using demo data", e);
+    S.markets = demoMarkets();
   }
-
-  await Promise.allSettled([loadCrypto()]);
-
-  if(!S.markets.length)S.markets=demoMarkets();
-  if(!S.crypto.length)S.crypto=[];
 
   renderAll();
   startTicks();
@@ -1459,31 +1850,32 @@ async function boot(){
 
 function demoMarkets(){
   const D=[
-    ['Will Bitcoin close above $100,000 on December 31?',0.74,4120000,740000],
-    ['Will Ethereum reach $5,000 before July?',0.27,1450000,280000],
-    ['Will the Federal Reserve cut rates at the next FOMC meeting?',0.68,2840000,412000],
-    ['Will the incumbent party retain the Senate after the midterms?',0.44,5120000,890000],
-    ['Will Real Madrid win the Champions League?',0.21,1560000,320000],
-    ['Will Liverpool win the Premier League title?',0.34,1320000,280000],
-    ['Will OpenAI release GPT-6 before July?',0.57,2100000,340000],
-    ['Will a ceasefire in Ukraine be announced before July?',0.28,4400000,720000],
-    ['Will NVIDIA close above $250 at end of Q2?',0.63,1320000,240000],
-    ['Will SpaceX land a crewed mission on the Moon before 2028?',0.24,680000,95000],
-    ['Will Taylor Swift announce a new album before July?',0.55,520000,105000],
-    ['Will the US enter a technical recession this year?',0.19,1650000,280000]
+    {q:'Will Bitcoin close above $100,000 on December 31?',p:0.74,v:4120000,l:740000,c:'Crypto',i:'₿',col:'#fbbf24',bg:'rgba(251,191,36,.14)'},
+    {q:'Will Ethereum reach $5,000 before July?',p:0.27,v:1450000,l:280000,c:'Crypto',i:'₿',col:'#fbbf24',bg:'rgba(251,191,36,.14)'},
+    {q:'Will the Federal Reserve cut rates at the next FOMC meeting?',p:0.68,v:2840000,l:412000,c:'Economics',i:'📈',col:'#c084fc',bg:'rgba(192,132,252,.14)'},
+    {q:'Will the incumbent party retain the Senate after the midterms?',p:0.44,v:5120000,l:890000,c:'Politics',i:'🏛️',col:'#60a5fa',bg:'rgba(96,165,250,.14)'},
+    {q:'Will Real Madrid win the Champions League?',p:0.21,v:1560000,l:320000,c:'Sports',i:'🏆',col:'#34d399',bg:'rgba(52,211,153,.14)'},
+    {q:'Will Liverpool win the Premier League title?',p:0.34,v:1320000,l:280000,c:'Sports',i:'🏆',col:'#34d399',bg:'rgba(52,211,153,.14)'},
+    {q:'Will OpenAI release GPT-6 before July?',p:0.57,v:2100000,l:340000,c:'Tech',i:'💻',col:'#22d3ee',bg:'rgba(34,211,238,.14)'},
+    {q:'Will a ceasefire in Ukraine be announced before July?',p:0.28,v:4400000,l:720000,c:'Geopolitics',i:'🌍',col:'#f87171',bg:'rgba(248,113,113,.14)'},
+    {q:'Will NVIDIA close above $250 at end of Q2?',p:0.63,v:1320000,l:240000,c:'Markets',i:'📊',col:'#818cf8',bg:'rgba(129,140,248,.14)'},
+    {q:'Will SpaceX land a crewed mission on the Moon before 2028?',p:0.24,v:680000,l:95000,c:'Science',i:'🔬',col:'#2dd4bf',bg:'rgba(45,212,191,.14)'},
+    {q:'Will Taylor Swift announce a new album before July?',p:0.55,v:520000,l:105000,c:'Culture',i:'🎬',col:'#f472b6',bg:'rgba(244,114,182,.14)'},
+    {q:'Will the US enter a technical recession this year?',p:0.19,v:1650000,l:280000,c:'Economics',i:'📈',col:'#c084fc',bg:'rgba(192,132,252,.14)'}
   ];
   return D.map((d,i)=>{
-    const ci=detectCat(d[0],[]);
-    return analyze({id:'d'+i,kind:'market',q:d[0],desc:'',slug:'',evSlug:'',img:'',
-      cat:ci.n,catI:ci.i,catC:ci.c,catB:ci.b,
-      volume:d[2],vol24:d[2]*.07,liquidity:d[3],prices:[d[1],1-d[1]],spread:.008,
-      bid:d[1]-.004,ask:d[1]+.004,move:(Math.random()-.5)*.04,end:null,
-      url:'https://polymarket.com'});
+    return analyze({
+      id:'d'+i, kind:'market', q:d.q, desc:'', slug:'', evSlug:'', img:'',
+      cat:d.c, catI:d.i, catC:d.col, catB:d.bg,
+      volume:d.v, vol24:d.v*.07, liquidity:d.l, 
+      prices:[d.p,1-d.p], spread:.008,
+      bid:d.p-.004, ask:d.p+.004, move:(Math.random()-.5)*.04, end:null,
+      url:'https://polymarket.com'
+    });
   });
 }
 
 function startTicks(){
-  // Every 12s: refresh crypto spot prices and check SL/TP + crypto expiry
   setInterval(async()=>{
     await fetchPrices();
     await loadCrypto();
@@ -1491,9 +1883,10 @@ function startTicks(){
     renderTicker();
     settleDue();
     renderPortfolio();
+    runAIBot();
+    if(S.isRealWallet) fetchRealBalance().then(renderPortfolio);
   },12000);
 
-  // Every 9s: drift market prices, update equity, check SL/TP
   setInterval(()=>{
     S.markets=S.markets.map(m=>{
       const d=(Math.random()-.5)*.005;
@@ -1503,6 +1896,7 @@ function startTicks(){
     renderMarkets();renderScanner();renderTicker();
     settleDue();
     renderPortfolio();
+    runAIBot();
   },9000);
 }
 
@@ -1516,6 +1910,13 @@ function wire(){
   $('q').oninput=e=>{S.q=e.target.value;renderMarkets()};
   $('sortSel').onchange=e=>{S.sort=e.target.value;renderMarkets()};
   $('scSort').onchange=e=>{S.scSort=e.target.value;renderScanner()};
+
+  $('connectBtn').onclick = () => {
+    if (S.isRealWallet) disconnectWallet();
+    else connectWallet();
+  };
+
+  $('aiToggle').onclick = toggleAI;
 
   $('importBtn').onclick=openImport;
   $('importClose').onclick=closeImport;
@@ -1551,7 +1952,7 @@ function wire(){
     $('fundModal').classList.add('hide');toast(`Added ${usd(a)}`);
   };
   $('resetBtn').onclick=()=>{
-    if(!confirm('Reset wallet to $25 and clear all positions & history?'))return;
+    if(!confirm('Reset dummy wallet to $25 and clear all history?'))return;
     S.wallet={bal:25,init:25};S.positions=[];S.history=[];
     persist();renderPortfolio();toast('Wallet reset','i');
   };
