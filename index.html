@@ -8,8 +8,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
-<!-- Ethers.js for Real Web3 Wallet Integration -->
+<!-- Web3 Libraries -->
 <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js" type="application/javascript"></script>
+<script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.78.0/lib/index.iife.min.js"></script>
 <style>
 :root{
   --bg:#06060d; --bg2:#0b0b16; --card:#10101f; --card2:#16162a; --input:#0a0a14;
@@ -293,6 +294,14 @@ main{padding:16px;max-width:1460px;margin:0 auto}
 .sub:hover{transform:translateY(-2px);filter:brightness(1.08)}
 .sub:disabled{opacity:.45;cursor:not-allowed;transform:none}
 
+/* ========== WALLET SELECTOR MODAL ========== */
+.wallet-opt{display:flex;align-items:center;gap:12px;padding:16px;background:var(--card);border:1px solid var(--line);border-radius:12px;cursor:pointer;margin-bottom:10px;transition:.2s var(--e)}
+.wallet-opt:hover{background:var(--card2);border-color:var(--vio2);transform:translateY(-2px)}
+.wallet-opt img{width:32px;height:32px}
+.wallet-opt-info{flex:1}
+.wallet-opt-name{font-size:15px;font-weight:800;color:var(--txt)}
+.wallet-opt-desc{font-size:11px;color:var(--faint);margin-top:2px}
+
 /* ========== SEARCH OVERLAY ========== */
 .cmd{position:fixed;inset:0;background:rgba(4,4,10,.94);backdrop-filter:blur(18px);z-index:300;display:flex;flex-direction:column;animation:fade .2s var(--eo)}
 .cmd.hide{display:none}
@@ -485,8 +494,8 @@ main{padding:16px;max-width:1460px;margin:0 auto}
       <div class="hb" id="wBal">$25<span class="c">.00</span></div>
       <div class="hp" id="wPnl">+$0.00 (0.00%)</div>
       <div class="hsub">
-        <span>Cash: <b id="wCash">$25.00</b></span>
-        <span>In Positions: <b id="wOpen">$0.00</b></span>
+        <span id="subCashLabel">Cash:</span> <b id="wCash">$25.00</b>
+        <span id="subOpenLabel">In Positions:</span> <b id="wOpen">$0.00</b>
       </div>
       <div class="hacts">
         <button class="wb p" id="fundBtn">＋ Add Funds</button>
@@ -549,6 +558,35 @@ main{padding:16px;max-width:1460px;margin:0 auto}
   <button data-tab="scanner"><span class="ni">⚡</span><span>Scanner</span></button>
 </nav>
 
+<!-- WALLET SELECTOR MODAL -->
+<div class="mbk hide" id="walletModal">
+  <div class="mdl" style="max-width:400px">
+    <button class="mx" id="walletClose">×</button>
+    <div style="padding:22px">
+      <div style="font-size:18px;font-weight:800;margin-bottom:6px;">Connect a Wallet</div>
+      <div style="font-size:12px;color:var(--dim);margin-bottom:18px;">Select your preferred blockchain network.</div>
+      
+      <div class="wallet-opt" id="optMetamask">
+        <div style="font-size:24px;">🦊</div>
+        <div class="wallet-opt-info">
+          <div class="wallet-opt-name">MetaMask</div>
+          <div class="wallet-opt-desc">Polygon Network · USDC.e</div>
+        </div>
+        <div style="font-size:12px;color:var(--vio2);font-weight:800;">Connect →</div>
+      </div>
+
+      <div class="wallet-opt" id="optPhantom">
+        <div style="font-size:24px;">👻</div>
+        <div class="wallet-opt-info">
+          <div class="wallet-opt-name">Phantom</div>
+          <div class="wallet-opt-desc">Solana Network · SOL</div>
+        </div>
+        <div style="font-size:12px;color:var(--vio2);font-weight:800;">Connect →</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- TRADE MODAL -->
 <div class="mbk hide" id="tradeModal"><div class="mdl"><button class="mx" id="tradeClose">×</button><div id="tradeBody"></div></div></div>
 <!-- FUND MODAL -->
@@ -596,7 +634,7 @@ main{padding:16px;max-width:1460px;margin:0 auto}
 
 <script>
 /* ============================================================
-   POLYSIGNAL X — engine with Web3 Wallet Integration
+   POLYSIGNAL X — engine with Multi-Chain Wallet Integration
    ============================================================ */
 const GAMMA='https://gamma-api.polymarket.com';
 const CG='https://api.coingecko.com/api/v3/simple/price';
@@ -636,7 +674,7 @@ const S={
   ai: { on: false, edge: 5, size: 5, max: 3, logs: [] },
   
   // Real Wallet State
-  isRealWallet: false,
+  walletType: null, // 'polygon', 'solana', or null
   realAddress: null,
   realBalance: 0,
   realPositions: []
@@ -695,18 +733,31 @@ function catOfMarket(m){
 }
 
 /* ============================================================
-   REAL WALLET INTEGRATION (Web3 / MetaMask)
+   MULTI-CHAIN WALLET INTEGRATION
    ============================================================ */
-async function connectWallet() {
+function openWalletSelector() {
+  if (S.walletType) {
+    disconnectWallet();
+  } else {
+    $('walletModal').classList.remove('hide');
+  }
+}
+function closeWalletSelector() {
+  $('walletModal').classList.add('hide');
+}
+
+// MetaMask / Polygon
+async function connectMetaMask() {
   if (!window.ethereum) {
     toast('Please install MetaMask!', 'e');
     return;
   }
+  closeWalletSelector();
   
   try {
     const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
     S.realAddress = accounts[0];
-    S.isRealWallet = true;
+    S.walletType = 'polygon';
     
     try {
       await window.ethereum.request({
@@ -733,10 +784,10 @@ async function connectWallet() {
     $('wBalLabel').textContent = 'Live USDC.e Balance';
     $('fundBtn').style.display = 'none';
     
-    toast('Wallet Connected!');
+    toast('Polygon Wallet Connected!');
     
-    await fetchRealBalance();
-    await fetchRealPositions();
+    await fetchPolygonBalance();
+    await fetchPolymarketPositions();
     renderPortfolio();
     
     window.ethereum.on('accountsChanged', (accs) => {
@@ -744,8 +795,8 @@ async function connectWallet() {
       else {
         S.realAddress = accs[0];
         $('connectBtn').innerHTML = `🦊 ${S.realAddress.slice(0,6)}...${S.realAddress.slice(-4)}`;
-        fetchRealBalance().then(renderPortfolio);
-        fetchRealPositions().then(renderPortfolio);
+        fetchPolygonBalance().then(renderPortfolio);
+        fetchPolymarketPositions().then(renderPortfolio);
       }
     });
     
@@ -755,11 +806,51 @@ async function connectWallet() {
   }
 }
 
+// Phantom / Solana
+async function connectPhantom() {
+  const isPhantom = window.solana && window.solana.isPhantom;
+  if (!isPhantom) {
+    toast('Please install Phantom Wallet!', 'e');
+    return;
+  }
+  closeWalletSelector();
+  
+  try {
+    const resp = await window.solana.connect();
+    S.realAddress = resp.publicKey.toString();
+    S.walletType = 'solana';
+    
+    $('connectBtn').innerHTML = `👻 ${S.realAddress.slice(0,4)}...${S.realAddress.slice(-4)}`;
+    $('connectBtn').classList.add('connected');
+    $('wBalLabel').textContent = 'Live SOL Balance';
+    $('fundBtn').style.display = 'none';
+    
+    toast('Solana Wallet Connected!');
+    
+    await fetchSolanaBalance();
+    renderPortfolio();
+    
+    window.solana.on('disconnect', () => disconnectWallet());
+    
+  } catch (err) {
+    console.error(err);
+    toast('Phantom connection failed', 'e');
+  }
+}
+
 function disconnectWallet() {
-  S.isRealWallet = false;
+  if (S.walletType === 'polygon' && window.ethereum) {
+    window.ethereum.removeAllListeners('accountsChanged');
+  }
+  if (S.walletType === 'solana' && window.solana) {
+    window.solana.disconnect();
+  }
+  
+  S.walletType = null;
   S.realAddress = null;
   S.realBalance = 0;
   S.realPositions = [];
+  
   $('connectBtn').innerHTML = `🔗 <span>Connect</span>`;
   $('connectBtn').classList.remove('connected');
   $('wBalLabel').textContent = 'Total Equity';
@@ -768,23 +859,37 @@ function disconnectWallet() {
   toast('Wallet Disconnected', 'i');
 }
 
-async function fetchRealBalance() {
+// Fetch Polygon USDC.e Balance
+async function fetchPolygonBalance() {
   if (!S.realAddress || typeof ethers === 'undefined') return;
   try {
     const provider = new ethers.providers.Web3Provider(window.ethereum);
-    const USDC_E_ADDRESS = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174"; // Polymarket uses USDC.e
+    const USDC_E_ADDRESS = "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174";
     const abi = ["function balanceOf(address) view returns (uint256)"];
     const contract = new ethers.Contract(USDC_E_ADDRESS, abi, provider);
-    
     const balWei = await contract.balanceOf(S.realAddress);
     S.realBalance = parseFloat(ethers.utils.formatUnits(balWei, 6));
   } catch(e) {
-    console.error("Failed to fetch on-chain balance", e);
+    console.error("Failed to fetch Polygon balance", e);
   }
 }
 
-async function fetchRealPositions() {
-  if (!S.realAddress) return;
+// Fetch Solana SOL Balance
+async function fetchSolanaBalance() {
+  if (!S.realAddress || typeof solanaWeb3 === 'undefined') return;
+  try {
+    const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl('mainnet-beta'), 'confirmed');
+    const publicKey = new solanaWeb3.PublicKey(S.realAddress);
+    const balance = await connection.getBalance(publicKey);
+    S.realBalance = balance / solanaWeb3.LAMPORTS_PER_SOL; // Convert lamports to SOL
+  } catch(e) {
+    console.error("Failed to fetch Solana balance", e);
+  }
+}
+
+// Fetch Polymarket Positions (Only works for Polygon wallets)
+async function fetchPolymarketPositions() {
+  if (!S.realAddress || S.walletType !== 'polygon') return;
   try {
     const res = await jget(`https://data-api.polymarket.com/positions?user=${S.realAddress}`);
     S.realPositions = res || [];
@@ -1227,14 +1332,23 @@ function posValue(p){return p.shares*markPrice(p)}
 function posPnl(p){const v=posValue(p);return{v,pnl:v-p.cost,pct:p.cost?(v-p.cost)/p.cost:0}}
 
 function renderPortfolio(){
-  if (S.isRealWallet) {
+  if (S.walletType) {
     // === REAL WALLET UI ===
     $('wBal').innerHTML = usd(S.realBalance).replace('.','<span class="c">.')+'</span>';
     $('wPnl').textContent = 'Live On-Chain Data';
     $('wPnl').style.color = 'var(--cy)';
     
-    $('wCash').textContent = usd(S.realBalance);
-    $('wOpen').textContent = S.realPositions.length + ' positions';
+    if (S.walletType === 'polygon') {
+      $('subCashLabel').textContent = 'USDC.e:';
+      $('subOpenLabel').textContent = 'Open Positions:';
+      $('wCash').textContent = usd(S.realBalance);
+      $('wOpen').textContent = S.realPositions.length;
+    } else if (S.walletType === 'solana') {
+      $('subCashLabel').textContent = 'SOL Balance:';
+      $('subOpenLabel').textContent = 'Network:';
+      $('wCash').textContent = S.realBalance.toFixed(4) + ' SOL';
+      $('wOpen').textContent = 'Solana';
+    }
 
     $('sPort').textContent = usd(S.realBalance);
     $('sPnl').textContent = '—';
@@ -1243,29 +1357,43 @@ function renderPortfolio(){
     $('posN').textContent = S.realPositions.length;
 
     const pl=$('posList'),pe2=$('posEmpty');
-    if(!S.realPositions.length){pl.innerHTML='';pe2.classList.remove('hide')}
-    else{
+    
+    if (S.walletType === 'solana') {
+      pl.innerHTML = `<div class="pc" style="border-color:var(--vio2)">
+        <div class="ph"><div class="pq" style="color:var(--vio2)">Phantom Wallet Connected (Solana)</div></div>
+        <div style="font-size:12px;color:var(--dim);margin-bottom:10px;">
+          Polymarket runs on the Polygon network. To trade using your Solana funds, you must bridge your SOL to Polygon USDC.e.
+        </div>
+        <div class="pctl" style="justify-content:flex-end">
+          <a href="https://portalbridge.com" target="_blank" class="xbtn sell" style="text-decoration:none">Bridge SOL to Polygon ↗</a>
+        </div>
+      </div>`;
       pe2.classList.add('hide');
-      pl.innerHTML = S.realPositions.map(p => {
-        const isYes = p.outcome === 'Yes';
-        const sideCls = isYes ? 'y' : 'n';
-        const curVal = p.currentValue || 0;
-        const pnl = p.cashPnl || 0;
-        const pct = p.percentPnl || 0;
-        
-        return `<div class="pc" style="border-color:var(--grGlow)">
-          <div class="ph"><div class="pq">${esc(p.title)}</div><span class="side ${sideCls}">${esc(p.outcome)}</span></div>
-          <div class="pstats">
-            <div><div class="psl">Size</div><div class="psv">${Number(p.size).toFixed(2)}</div></div>
-            <div><div class="psl">Avg Price</div><div class="psv">${(p.avgPrice*100).toFixed(1)}¢</div></div>
-            <div><div class="psl">Value</div><div class="psv">${usd(curVal)}</div></div>
-            <div><div class="psl">P&amp;L</div><div class="psv" style="color:${pnl>=0?'var(--gr)':'var(--rd)'}">${pnl>=0?'+':''}${usd(pnl)} (${pct.toFixed(1)}%)</div></div>
-          </div>
-          <div class="pctl" style="justify-content:flex-end; border:none; padding-top:10px;">
-            <a href="https://polymarket.com/profile/${S.realAddress}" target="_blank" class="xbtn sell" style="text-decoration:none">Manage on Polymarket ↗</a>
-          </div>
-        </div>`;
-      }).join('');
+    } else {
+      if(!S.realPositions.length){pl.innerHTML='';pe2.classList.remove('hide')}
+      else{
+        pe2.classList.add('hide');
+        pl.innerHTML = S.realPositions.map(p => {
+          const isYes = p.outcome === 'Yes';
+          const sideCls = isYes ? 'y' : 'n';
+          const curVal = p.currentValue || 0;
+          const pnl = p.cashPnl || 0;
+          const pct = p.percentPnl || 0;
+          
+          return `<div class="pc" style="border-color:var(--grGlow)">
+            <div class="ph"><div class="pq">${esc(p.title)}</div><span class="side ${sideCls}">${esc(p.outcome)}</span></div>
+            <div class="pstats">
+              <div><div class="psl">Size</div><div class="psv">${Number(p.size).toFixed(2)}</div></div>
+              <div><div class="psl">Avg Price</div><div class="psv">${(p.avgPrice*100).toFixed(1)}¢</div></div>
+              <div><div class="psl">Value</div><div class="psv">${usd(curVal)}</div></div>
+              <div><div class="psl">P&amp;L</div><div class="psv" style="color:${pnl>=0?'var(--gr)':'var(--rd)'}">${pnl>=0?'+':''}${usd(pnl)} (${pct.toFixed(1)}%)</div></div>
+            </div>
+            <div class="pctl" style="justify-content:flex-end; border:none; padding-top:10px;">
+              <a href="https://polymarket.com/profile/${S.realAddress}" target="_blank" class="xbtn sell" style="text-decoration:none">Manage on Polymarket ↗</a>
+            </div>
+          </div>`;
+        }).join('');
+      }
     }
     
     $('histList').innerHTML = `<div class="emp"><div class="ic">📊</div><div class="tt">Real wallet history</div><div class="dd">View complete transaction history on Polymarket.</div></div>`;
@@ -1275,6 +1403,9 @@ function renderPortfolio(){
   }
 
   // === DUMMY WALLET UI ===
+  $('subCashLabel').textContent = 'Cash:';
+  $('subOpenLabel').textContent = 'In Positions:';
+  
   const openV=S.positions.reduce((s,p)=>s+posValue(p),0);
   const equity=S.wallet.bal+openV;
   const pnl=equity-S.wallet.init;
@@ -1480,7 +1611,7 @@ function renderTrade(){
   const {kind,item:m,side}=S.trade;
   const isCrypto=kind==='crypto';
   const price=isCrypto?(side==='UP'?m.up:m.down):(side==='YES'?m.pMkt:1-m.pMkt);
-  const bal=S.isRealWallet ? S.realBalance : S.wallet.bal;
+  const bal=S.walletType ? S.realBalance : S.wallet.bal;
   const def=Math.min(100,Math.max(10,Math.floor(bal)));
   const yesLbl=isCrypto?'UP':`YES · ${(m.pMkt*100).toFixed(1)}¢`;
   const noLbl=isCrypto?'DOWN':`NO · ${((1-m.pMkt)*100).toFixed(1)}¢`;
@@ -1495,7 +1626,7 @@ function renderTrade(){
       <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
         <span class="cat" style="background:${m.catB};color:${m.catC}">${m.catI} ${esc(m.cat)}</span>
         ${isCrypto?`<span class="cint">${m.min}M WINDOW</span>`:''}
-        ${S.isRealWallet?`<span class="cint" style="background:var(--grBg);color:var(--gr)">LIVE WALLET</span>`:''}
+        ${S.walletType?`<span class="cint" style="background:var(--grBg);color:var(--gr)">${S.walletType.toUpperCase()} CONNECTED</span>`:''}
       </div>
       <div class="mq">${esc(m.q)}</div>
       ${desc?`<div class="mdesc"><b>Summary:</b> ${esc(desc)}${desc.length>=420?'…':''}</div>`:''}
@@ -1521,7 +1652,7 @@ function renderTrade(){
       </div>
 
       <div class="fg">
-        <div class="fl"><span>Stake (USD)</span><span style="font-family:var(--mono);color:var(--faint)">${S.isRealWallet?'USDC.e:':'Cash:'} ${usd(bal)}</span></div>
+        <div class="fl"><span>Stake (USD)</span><span style="font-family:var(--mono);color:var(--faint)">${S.walletType ? 'Wallet:' : 'Cash:'} ${usd(bal)}</span></div>
         <input class="fi" id="stake" type="number" min="1" value="${def}" oninput="updPayout()">
         <div class="qam">
           ${[5,10,25,50,100].map(a=>`<button class="qa" data-st="${a}">$${a}</button>`).join('')}
@@ -1544,10 +1675,10 @@ function renderTrade(){
 
       <div class="payout" id="payoutBox"></div>
 
-      <button class="sub ${(side==='YES'||side==='UP')?'y':'n'}" id="goBtn">${S.isRealWallet?'Simulate Trade':'Buy'} ${side} @ ${(price*100).toFixed(1)}¢</button>
+      <button class="sub ${(side==='YES'||side==='UP')?'y':'n'}" id="goBtn">${S.walletType?'Simulate Trade':'Buy'} ${side} @ ${(price*100).toFixed(1)}¢</button>
 
       <div style="font-size:9.5px;color:var(--faint);text-align:center;margin-top:10px;line-height:1.5">
-        ${S.isRealWallet ? '<b style="color:var(--am)">Note: Real wallet connected. Actual execution requires a backend proxy.</b>' : 'Binary payoff: win → <b style="color:var(--gr)">full $1.00 per share</b>. Lose → <b style="color:var(--rd)">entire stake lost</b>.'}
+        ${S.walletType ? '<b style="color:var(--am)">Note: Real wallet connected. Actual execution requires a backend proxy.</b>' : 'Binary payoff: win → <b style="color:var(--gr)">full $1.00 per share</b>. Lose → <b style="color:var(--rd)">entire stake lost</b>.'}
       </div>
       <div style="text-align:center;margin-top:8px">
         <a href="${esc(polyUrl)}" target="_blank" rel="noopener" style="font-size:11px;font-weight:700;color:var(--vio2);text-decoration:none;display:inline-flex;align-items:center;gap:4px">
@@ -1584,7 +1715,7 @@ function updPayout(){
       <div class="pvb w"><div class="lbl">If correct — profit</div><div class="amt" style="color:var(--gr)">+${usd(profit)}</div></div>
     </div>
   `;
-  const bal = S.isRealWallet ? S.realBalance : S.wallet.bal;
+  const bal = S.walletType ? S.realBalance : S.wallet.bal;
   const btn=$('goBtn');
   if(btn)btn.disabled=stake<=0||stake>bal;
 }
@@ -1595,7 +1726,7 @@ function doBuy(){
   const isCrypto=kind==='crypto';
   const price=isCrypto?(side==='UP'?m.up:m.down):(side==='YES'?m.pMkt:1-m.pMkt);
   const stake=Math.max(0,+($('stake')?.value||0));
-  const bal = S.isRealWallet ? S.realBalance : S.wallet.bal;
+  const bal = S.walletType ? S.realBalance : S.wallet.bal;
   
   if(stake<=0){toast('Enter a stake','e');return}
   if(stake>bal){toast('Insufficient balance','e');return}
@@ -1603,7 +1734,7 @@ function doBuy(){
   const sl=clamp(+($('slr')?.value||0),0,100);
   const tp=clamp(+($('tpr')?.value||0),0,500);
   
-  if (S.isRealWallet) {
+  if (S.walletType) {
     toast('Demo mode: Real trade signing requires backend setup.', 'i');
   } else {
     S.wallet.bal-=stake;
@@ -1884,7 +2015,8 @@ function startTicks(){
     settleDue();
     renderPortfolio();
     runAIBot();
-    if(S.isRealWallet) fetchRealBalance().then(renderPortfolio);
+    if(S.walletType==='polygon') fetchPolygonBalance().then(renderPortfolio);
+    if(S.walletType==='solana') fetchSolanaBalance().then(renderPortfolio);
   },12000);
 
   setInterval(()=>{
@@ -1911,10 +2043,12 @@ function wire(){
   $('sortSel').onchange=e=>{S.sort=e.target.value;renderMarkets()};
   $('scSort').onchange=e=>{S.scSort=e.target.value;renderScanner()};
 
-  $('connectBtn').onclick = () => {
-    if (S.isRealWallet) disconnectWallet();
-    else connectWallet();
-  };
+  $('connectBtn').onclick = openWalletSelector;
+  $('walletClose').onclick = closeWalletSelector;
+  $('walletModal').onclick = e => { if(e.target.id === 'walletModal') closeWalletSelector(); };
+  
+  $('optMetamask').onclick = connectMetaMask;
+  $('optPhantom').onclick = connectPhantom;
 
   $('aiToggle').onclick = toggleAI;
 
@@ -1960,7 +2094,7 @@ function wire(){
 
   document.addEventListener('keydown',e=>{
     if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='k'){e.preventDefault();openSearch()}
-    if(e.key==='Escape'){closeTrade();closeSearch();$('fundModal').classList.add('hide');$('importModal').classList.add('hide')}
+    if(e.key==='Escape'){closeTrade();closeSearch();$('fundModal').classList.add('hide');$('importModal').classList.add('hide');closeWalletSelector();}
     if(e.key==='/'&&document.activeElement.tagName!=='INPUT'){e.preventDefault();openSearch()}
     if(!$('cmd').classList.contains('hide')){
       if(e.key==='ArrowDown'||e.key==='ArrowUp'){
